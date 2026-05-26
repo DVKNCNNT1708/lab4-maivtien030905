@@ -1,0 +1,95 @@
+openapi: 3.1.0
+info:
+  title: Smart Campus - Integrated Core Business API
+  version: 1.0.0
+  description: API contract tổng hợp cho Core Business
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: UP }
+
+  /vision/face-match:
+    post:
+      operationId: postFaceMatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FaceMatchRequest' }
+      responses:
+        '200':
+          description: Kết quả nhận diện
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FaceMatchResponse' }
+        '422':
+          description: Lỗi nghiệp vụ
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetails' }
+
+  /access/check:
+    post:
+      operationId: checkAccessPolicy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AccessCheckRequest' }
+      responses:
+        '200':
+          description: Kết quả quyết định mở cổng
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AccessCheckResponse' }
+
+components:
+  schemas:
+    ProblemDetails:
+      type: object
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer, example: 422 }
+        detail: { type: string }
+
+    FaceMatchRequest:
+      type: object
+      required: [imageRef, traceId]
+      properties:
+        imageRef: { type: string }
+        traceId: { type: string }
+
+    FaceMatchResponse:
+      type: object
+      required: [status, confidence, modelVersion]
+      properties:
+        status: { type: string, enum: [success, low_confidence, failed] }
+        confidence: { type: number }
+        matchId: { type: [string, "null"] }
+        modelVersion: { type: string }
+
+    AccessCheckRequest:
+      type: object
+      required: [cardId, gateId, direction]
+      properties:
+        cardId: { type: string }
+        gateId: { type: string }
+        direction: { type: string, enum: [IN, OUT] }
+
+    AccessCheckResponse:
+      type: object
+      required: [decision, policyId, expiresAt]
+      properties:
+        decision: { type: string, enum: [allow, deny] }
+        policyId: { type: string }
+        expiresAt: { type: string }

@@ -1,0 +1,91 @@
+{
+  "info": {
+    "name": "FIT4110_lab03_core_business",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "System Health Check",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{authToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status Code phải là 200 OK', function () { pm.response.to.have.status(200); });",
+              "pm.test('Trạng thái hệ thống UP ổn định', function () { pm.expect(pm.response.json().status).to.eql('UP'); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Check Access Policy Realtime (Cặp 10)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{authToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"cardId\": \"RFID_STUDENT_102\",\n  \"gateId\": \"GATE_MAIN_BLOCK_B\",\n  \"direction\": \"IN\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/access/check", "host": ["{{baseUrl}}"], "path": ["access", "check"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status Code là 200 - Phản hồi thành công', function () { pm.response.to.have.status(200); });",
+              "pm.test('Cấu trúc dữ liệu có chứa thuộc tính decision', function () { pm.expect(pm.response.json()).to.have.property('decision'); });",
+              "pm.test('Decision phải trả về giá trị hợp lệ (allow hoặc deny)', function () { pm.expect(pm.response.json().decision).to.be.oneOf(['allow', 'deny']); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Face Match - Test Lỗi 422 Nghiệp Vụ (Boundary/Negative)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{authToken}}" },
+          { "key": "Prefer", "value": "code=422" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"imageRef\": \"https://smartcampus.vn/invalid-blur-image.jpg\",\n  \"traceId\": \"TR-ERROR-999\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/vision/face-match", "host": ["{{baseUrl}}"], "path": ["vision", "face-match"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Bắt lỗi 422 Unprocessable Entity thành công', function () { pm.response.to.have.status(422); });",
+              "pm.test('Cấu trúc lỗi tuân thủ chuẩn RFC 7807 Problem Details', function () { ",
+              "    var errorJson = pm.response.json();",
+              "    pm.expect(errorJson).to.have.property('title');",
+              "    pm.expect(errorJson).to.have.property('status', 422);",
+              "    pm.expect(errorJson).to.have.property('detail');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ]
+}
